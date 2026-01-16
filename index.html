@@ -1,1 +1,151 @@
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuriangMovie - Premium Cinema Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #e5e5e5; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .movie-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .movie-card:hover { transform: translateY(-10px) scale(1.02); z-index: 10; border-color: #ef4444; }
+        .hero-gradient { background: linear-gradient(to top, #050505 10%, transparent 100%), linear-gradient(to right, #050505 30%, transparent 100%); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ef4444; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <nav class="fixed top-0 w-full z-[100] glass px-6 py-4 flex justify-between items-center transition-all duration-500" id="navbar">
+        <div class="flex items-center gap-10">
+            <h1 class="text-3xl font-extrabold text-red-600 tracking-tighter">GURIANG<span class="text-white">MOVIE</span></h1>
+            <div class="hidden lg:flex gap-6 text-sm font-medium uppercase tracking-widest text-gray-400">
+                <a href="#" class="hover:text-white transition">Home</a>
+                <a href="#" class="hover:text-white transition">Series</a>
+                <a href="#" class="hover:text-white transition">Popular</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="relative hidden md:block">
+                <input type="text" placeholder="Search movies..." class="bg-black/50 border border-white/10 rounded-full px-5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 w-64">
+            </div>
+            <button class="bg-red-600 px-6 py-2 rounded-md font-bold text-sm hover:bg-red-700 transition">LOGIN</button>
+        </div>
+    </nav>
+
+    <section class="relative h-[90vh] w-full overflow-hidden">
+        <div id="hero-bg" class="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"></div>
+        <div class="absolute inset-0 hero-gradient"></div>
+        <div class="relative z-10 h-full flex flex-col justify-center px-6 md:px-16 max-w-4xl">
+            <span class="flex items-center gap-2 text-red-500 font-bold mb-4">
+                <span class="w-8 h-[2px] bg-red-500"></span> NEW RELEASE
+            </span>
+            <h2 id="hero-title" class="text-5xl md:text-7xl font-extrabold mb-4 leading-tight">Loading...</h2>
+            <p id="hero-desc" class="text-gray-400 text-lg mb-8 line-clamp-3">Mencari film terbaru untuk Anda...</p>
+            <div class="flex gap-4">
+                <button onclick="openPlayer('hero')" class="bg-white text-black px-8 py-3 rounded-md font-extrabold flex items-center gap-2 hover:bg-red-600 hover:text-white transition">
+                    ▶ WATCH NOW
+                </button>
+                <button class="bg-white/10 backdrop-blur-md px-8 py-3 rounded-md font-bold flex items-center gap-2 hover:bg-white/20 transition">
+                    ⓘ MORE INFO
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <main class="relative z-20 -mt-20 px-6 md:px-16 pb-20">
+        <h3 class="text-2xl font-bold mb-8 flex items-center gap-3">
+            <span class="w-2 h-8 bg-red-600 rounded-full"></span> Trending Movies
+        </h3>
+        
+        <div id="movie-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            <div class="h-80 bg-white/5 animate-pulse rounded-xl"></div>
+            <div class="h-80 bg-white/5 animate-pulse rounded-xl"></div>
+            <div class="h-80 bg-white/5 animate-pulse rounded-xl"></div>
+            <div class="h-80 bg-white/5 animate-pulse rounded-xl"></div>
+            <div class="h-80 bg-white/5 animate-pulse rounded-xl"></div>
+            <div class="h-80 bg-white/5 animate-pulse rounded-xl"></div>
+        </div>
+    </main>
+
+    <div id="player-modal" class="fixed inset-0 z-[200] bg-black/95 hidden flex-col items-center justify-center p-4">
+        <button onclick="closePlayer()" class="absolute top-10 right-10 text-white text-4xl hover:text-red-600 transition">&times;</button>
+        <div class="w-full max-w-5xl aspect-video bg-black shadow-2xl">
+            <iframe id="video-frame" src="" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'YOUR_TMDB_API_KEY'; // <--- MASUKKAN API KEY ANDA DI SINI
+        const IMG_URL = 'https://image.tmdb.org/t/p/original';
+        const grid = document.getElementById('movie-grid');
+        let heroMovieId = '';
+
+        async function init() {
+            try {
+                const res = await fetch(`https://api.themoviedb.org/3/trending/movie/day?api_key=${API_KEY}`);
+                const data = await res.json();
+                const movies = data.results;
+
+                // Update Hero
+                const hero = movies[0];
+                heroMovieId = hero.id;
+                document.getElementById('hero-bg').style.backgroundImage = `url('${IMG_URL + hero.backdrop_path}')`;
+                document.getElementById('hero-title').innerText = hero.title;
+                document.getElementById('hero-desc').innerText = hero.overview;
+
+                // Update Grid
+                grid.innerHTML = movies.slice(1, 19).map(m => `
+                    <div class="movie-card glass rounded-xl overflow-hidden cursor-pointer" onclick="openPlayer('${m.id}')">
+                        <div class="relative">
+                            <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" loading="lazy" class="w-full h-auto">
+                            <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-xs font-bold text-yellow-500">
+                                ⭐ ${m.vote_average.toFixed(1)}
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="text-sm font-bold truncate">${m.title}</h4>
+                            <p class="text-xs text-gray-500 mt-1">${m.release_date.split('-')[0]}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Gagal memuat data. Pastikan API KEY benar.");
+            }
+        }
+
+        function openPlayer(id) {
+            const targetId = id === 'hero' ? heroMovieId : id;
+            const modal = document.getElementById('player-modal');
+            const frame = document.getElementById('video-frame');
+            // Menggunakan provider embed otomatis (2Embed)
+            frame.src = `https://www.2embed.cc/embed/${targetId}`;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePlayer() {
+            const modal = document.getElementById('player-modal');
+            const frame = document.getElementById('video-frame');
+            frame.src = '';
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Navbar Scroll Effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) nav.classList.add('bg-black', 'py-2');
+            else nav.classList.remove('bg-black', 'py-2');
+        });
+
+        init();
+    </script>
+</body>
+</html>
